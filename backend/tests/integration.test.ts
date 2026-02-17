@@ -71,7 +71,7 @@ describe("API Integration Tests", () => {
 
   describe("Peptides - Get by Category", () => {
     test("Get peptides by category should return 200", async () => {
-      const res = await api("/api/peptides/category/growth");
+      const res = await api("/api/peptides/category/Growth Hormone");
       await expectStatus(res, 200);
       const data = await res.json();
       expect(Array.isArray(data)).toBe(true);
