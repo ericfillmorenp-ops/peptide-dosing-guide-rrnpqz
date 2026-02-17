@@ -1,5 +1,4 @@
 
-import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,233 +8,214 @@ import {
   useColorScheme,
   TouchableOpacity,
 } from 'react-native';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { IconSymbol } from '@/components/IconSymbol';
+import React, { useState, useEffect } from 'react';
 import { colors } from '@/styles/commonStyles';
+import { IconSymbol } from '@/components/IconSymbol';
 import { getPeptideById, Peptide } from '@/utils/api';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
 export default function PeptideDetailScreen() {
-  const colorScheme = useColorScheme();
   const router = useRouter();
-  const { peptideId } = useLocalSearchParams();
-  const themeColors = colorScheme === 'dark' ? colors.dark : colors.light;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const { id } = useLocalSearchParams();
 
   const [peptide, setPeptide] = useState<Peptide | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('PeptideDetailScreen mounted for peptide ID:', peptideId);
-    fetchPeptideDetails();
-  }, [peptideId]);
+    if (id) {
+      console.log('Fetching peptide details for ID:', id);
+      fetchPeptideDetails();
+    }
+  }, [id]);
 
   const fetchPeptideDetails = async () => {
     try {
-      console.log('[PeptideDetail] Fetching peptide details from API');
-      setLoading(true);
       setError(null);
-      
-      const data = await getPeptideById(peptideId as string);
+      const data = await getPeptideById(id as string);
+      console.log('Received peptide details:', data.name);
       setPeptide(data);
-      console.log('[PeptideDetail] Peptide details loaded:', data.name);
-    } catch (error) {
-      console.error('[PeptideDetail] Error fetching peptide details:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load peptide details';
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching peptide details:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load peptide details';
       setError(errorMessage);
-      setPeptide(null);
-    } finally {
       setLoading(false);
     }
   };
 
+  const bgColor = isDark ? colors.backgroundDark : colors.backgroundLight;
+  const textColor = isDark ? colors.textDark : colors.textLight;
+  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
+  const borderColor = isDark ? '#38383a' : '#e5e5ea';
+
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <View style={[styles.container, { backgroundColor: bgColor }]}>
         <Stack.Screen
           options={{
-            title: 'Loading...',
             headerShown: true,
-            headerStyle: { backgroundColor: themeColors.card },
-            headerTintColor: themeColors.text,
+            title: 'Loading...',
+            headerBackTitle: 'Back',
           }}
         />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={themeColors.primary} />
-          <Text style={[styles.loadingText, { color: themeColors.textSecondary }]}>Loading details...</Text>
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: textColor }]}>Loading peptide details...</Text>
         </View>
       </View>
     );
   }
 
-  if (!peptide) {
+  if (error || !peptide) {
     return (
-      <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <View style={[styles.container, { backgroundColor: bgColor }]}>
         <Stack.Screen
           options={{
-            title: 'Error',
             headerShown: true,
-            headerStyle: { backgroundColor: themeColors.card },
-            headerTintColor: themeColors.text,
+            title: 'Error',
+            headerBackTitle: 'Back',
           }}
         />
-        <View style={styles.errorContainer}>
+        <View style={styles.centerContent}>
           <IconSymbol
-            android_material_icon_name="error"
-            ios_icon_name="exclamationmark.triangle.fill"
-            size={64}
-            color={themeColors.error}
+            ios_icon_name="exclamationmark.triangle"
+            android_material_icon_name="warning"
+            size={48}
+            color={colors.error}
           />
-          <Text style={[styles.errorTitle, { color: themeColors.text }]}>
+          <Text style={[styles.errorTitle, { color: textColor }]}>Error Loading Details</Text>
+          <Text style={[styles.errorMessage, { color: textColor }]}>
             {error || 'Peptide not found'}
           </Text>
-          <Text style={[styles.errorText, { color: themeColors.textSecondary }]}>
-            {error ? 'There was an error loading the peptide details.' : 'The requested peptide could not be found.'}
-          </Text>
-          <View style={styles.errorButtons}>
-            <TouchableOpacity
-              style={[styles.retryButton, { backgroundColor: themeColors.primary }]}
-              onPress={fetchPeptideDetails}
-            >
-              <IconSymbol
-                android_material_icon_name="refresh"
-                ios_icon_name="arrow.clockwise"
-                size={20}
-                color="#FFFFFF"
-              />
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.backButton, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}
-              onPress={() => router.back()}
-            >
-              <Text style={[styles.backButtonText, { color: themeColors.text }]}>Go Back</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={fetchPeptideDetails}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
   }
 
-  const benefitsList = peptide.benefits.split(',').map(b => b.trim());
-  const sideEffectsList = peptide.sideEffects 
-    ? peptide.sideEffects.split(',').map(s => s.trim())
-    : ['No known side effects reported'];
-
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <View style={[styles.container, { backgroundColor: bgColor }]}>
       <Stack.Screen
         options={{
-          title: peptide.name,
           headerShown: true,
-          headerStyle: { backgroundColor: themeColors.card },
-          headerTintColor: themeColors.text,
+          title: peptide.name,
+          headerBackTitle: 'Back',
         }}
       />
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={[styles.headerCard, { backgroundColor: themeColors.card }]}>
-          <View style={styles.headerRow}>
-            <Text style={[styles.peptideName, { color: themeColors.text }]}>{peptide.name}</Text>
-            <View style={[styles.categoryBadge, { backgroundColor: themeColors.highlight }]}>
-              <Text style={[styles.categoryText, { color: themeColors.primary }]}>{peptide.category}</Text>
-            </View>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        {/* Header Card */}
+        <View style={[styles.headerCard, { backgroundColor: cardBg, borderColor }]}>
+          <Text style={[styles.peptideName, { color: textColor }]}>{peptide.name}</Text>
+          <View style={[styles.categoryBadge, { backgroundColor: colors.primary + '20' }]}>
+            <Text style={[styles.categoryBadgeText, { color: colors.primary }]}>
+              {peptide.category}
+            </Text>
           </View>
-          <Text style={[styles.description, { color: themeColors.textSecondary }]}>{peptide.description}</Text>
         </View>
 
-        <View style={[styles.section, { backgroundColor: themeColors.card }]}>
+        {/* Description */}
+        <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
           <View style={styles.sectionHeader}>
             <IconSymbol
+              ios_icon_name="doc.text"
+              android_material_icon_name="description"
+              size={24}
+              color={colors.primary}
+            />
+            <Text style={[styles.sectionTitle, { color: textColor }]}>Description</Text>
+          </View>
+          <Text style={[styles.sectionText, { color: textColor }]}>{peptide.description}</Text>
+        </View>
+
+        {/* Benefits */}
+        <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
+          <View style={styles.sectionHeader}>
+            <IconSymbol
+              ios_icon_name="star.fill"
+              android_material_icon_name="star"
+              size={24}
+              color={colors.primary}
+            />
+            <Text style={[styles.sectionTitle, { color: textColor }]}>Benefits</Text>
+          </View>
+          <Text style={[styles.sectionText, { color: textColor }]}>{peptide.benefits}</Text>
+        </View>
+
+        {/* Dosage Information */}
+        <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
+          <View style={styles.sectionHeader}>
+            <IconSymbol
+              ios_icon_name="syringe"
               android_material_icon_name="medication"
-              ios_icon_name="pills.fill"
               size={24}
-              color={themeColors.primary}
+              color={colors.primary}
             />
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Dosing Information</Text>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>Dosage Information</Text>
           </View>
-
-          <View style={styles.infoGrid}>
-            <View style={styles.infoItem}>
-              <Text style={[styles.infoLabel, { color: themeColors.textSecondary }]}>Dosage Range</Text>
-              <Text style={[styles.infoValue, { color: themeColors.text }]}>
-                {peptide.dosageMin} - {peptide.dosageMax}
+          <View style={styles.dosageGrid}>
+            <View style={styles.dosageItem}>
+              <Text style={[styles.dosageLabel, { color: colors.textSecondary }]}>Dosage Range</Text>
+              <Text style={[styles.dosageValue, { color: textColor }]}>
+                {peptide.dosageMin}
+              </Text>
+              <Text style={[styles.dosageValue, { color: textColor }]}>to</Text>
+              <Text style={[styles.dosageValue, { color: textColor }]}>
+                {peptide.dosageMax}
               </Text>
             </View>
-
-            <View style={styles.infoItem}>
-              <Text style={[styles.infoLabel, { color: themeColors.textSecondary }]}>Frequency</Text>
-              <Text style={[styles.infoValue, { color: themeColors.text }]}>{peptide.frequency}</Text>
+            <View style={styles.dosageItem}>
+              <Text style={[styles.dosageLabel, { color: colors.textSecondary }]}>Frequency</Text>
+              <Text style={[styles.dosageValue, { color: textColor }]}>{peptide.frequency}</Text>
             </View>
-
-            <View style={styles.infoItem}>
-              <Text style={[styles.infoLabel, { color: themeColors.textSecondary }]}>Timing</Text>
-              <Text style={[styles.infoValue, { color: themeColors.text }]}>
-                {peptide.timing || 'As directed'}
+            <View style={styles.dosageItem}>
+              <Text style={[styles.dosageLabel, { color: colors.textSecondary }]}>Route</Text>
+              <Text style={[styles.dosageValue, { color: textColor }]}>
+                {peptide.administrationRoute}
               </Text>
             </View>
+            {peptide.timing && (
+              <View style={styles.dosageItem}>
+                <Text style={[styles.dosageLabel, { color: colors.textSecondary }]}>Timing</Text>
+                <Text style={[styles.dosageValue, { color: textColor }]}>{peptide.timing}</Text>
+              </View>
+            )}
+          </View>
+        </View>
 
-            <View style={styles.infoItem}>
-              <Text style={[styles.infoLabel, { color: themeColors.textSecondary }]}>Administration</Text>
-              <Text style={[styles.infoValue, { color: themeColors.text }]}>{peptide.administrationRoute}</Text>
+        {/* Side Effects */}
+        {peptide.sideEffects && (
+          <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
+            <View style={styles.sectionHeader}>
+              <IconSymbol
+                ios_icon_name="exclamationmark.triangle"
+                android_material_icon_name="warning"
+                size={24}
+                color={colors.error}
+              />
+              <Text style={[styles.sectionTitle, { color: textColor }]}>Side Effects</Text>
             </View>
+            <Text style={[styles.sectionText, { color: textColor }]}>{peptide.sideEffects}</Text>
           </View>
-        </View>
+        )}
 
-        <View style={[styles.section, { backgroundColor: themeColors.card }]}>
-          <View style={styles.sectionHeader}>
-            <IconSymbol
-              android_material_icon_name="check-circle"
-              ios_icon_name="checkmark.circle.fill"
-              size={24}
-              color={themeColors.accent}
-            />
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Benefits</Text>
-          </View>
-
-          <View style={styles.listContainer}>
-            {benefitsList.map((benefit, index) => (
-              <View key={index} style={styles.listItem}>
-                <View style={[styles.bulletPoint, { backgroundColor: themeColors.accent }]} />
-                <Text style={[styles.listText, { color: themeColors.text }]}>{benefit}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={[styles.section, { backgroundColor: themeColors.card }]}>
-          <View style={styles.sectionHeader}>
-            <IconSymbol
-              android_material_icon_name="warning"
-              ios_icon_name="exclamationmark.triangle.fill"
-              size={24}
-              color={themeColors.error}
-            />
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Potential Side Effects</Text>
-          </View>
-
-          <View style={styles.listContainer}>
-            {sideEffectsList.map((sideEffect, index) => (
-              <View key={index} style={styles.listItem}>
-                <View style={[styles.bulletPoint, { backgroundColor: themeColors.error }]} />
-                <Text style={[styles.listText, { color: themeColors.text }]}>{sideEffect}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={[styles.disclaimer, { backgroundColor: themeColors.highlight }]}>
+        {/* Disclaimer */}
+        <View style={[styles.disclaimer, { backgroundColor: colors.error + '10', borderColor: colors.error + '30' }]}>
           <IconSymbol
+            ios_icon_name="info.circle"
             android_material_icon_name="info"
-            ios_icon_name="info.circle.fill"
             size={20}
-            color={themeColors.primary}
+            color={colors.error}
           />
-          <Text style={[styles.disclaimerText, { color: themeColors.text }]}>
-            This information is for educational purposes only. Always consult with a qualified healthcare provider before starting any peptide therapy.
+          <Text style={[styles.disclaimerText, { color: colors.error }]}>
+            This information is for educational purposes only. Always consult with a healthcare professional before starting any peptide therapy.
           </Text>
         </View>
       </ScrollView>
@@ -247,167 +227,112 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 16,
+  content: {
+    padding: 20,
   },
   headerCard: {
-    borderRadius: 16,
     padding: 20,
+    borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderWidth: 1,
     alignItems: 'center',
-    marginBottom: 12,
   },
   peptideName: {
     fontSize: 28,
-    fontWeight: '700',
-    flex: 1,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
   },
   categoryBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 16,
-    marginLeft: 12,
   },
-  categoryText: {
+  categoryBadgeText: {
     fontSize: 14,
     fontWeight: '600',
   },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
   section: {
-    borderRadius: 16,
-    padding: 20,
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    borderWidth: 1,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginLeft: 12,
-  },
-  infoGrid: {
-    gap: 16,
-  },
-  infoItem: {
     marginBottom: 12,
-  },
-  infoLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  listContainer: {
-    gap: 12,
-  },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  bulletPoint: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 7,
-    marginRight: 12,
-  },
-  listText: {
-    fontSize: 15,
-    lineHeight: 22,
-    flex: 1,
-  },
-  disclaimer: {
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  disclaimerText: {
-    fontSize: 13,
-    lineHeight: 20,
-    marginLeft: 12,
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  errorText: {
-    fontSize: 15,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
-  },
-  errorButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  retryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
     gap: 8,
   },
-  retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  backButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+  sectionText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  dosageGrid: {
+    gap: 16,
+  },
+  dosageItem: {
+    gap: 4,
+  },
+  dosageLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dosageValue: {
+    fontSize: 16,
+  },
+  disclaimer: {
+    flexDirection: 'row',
+    padding: 16,
     borderRadius: 12,
     borderWidth: 1,
+    gap: 12,
+    marginBottom: 20,
   },
-  backButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  disclaimerText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

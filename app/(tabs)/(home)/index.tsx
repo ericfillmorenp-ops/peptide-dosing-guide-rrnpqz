@@ -9,309 +9,318 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   useColorScheme,
-  Platform,
+  RefreshControl,
 } from 'react-native';
-import { useTheme } from '@react-navigation/native';
 import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
-import { getAllPeptides, Peptide } from '@/utils/api';
+import { getAllPeptides, searchPeptides, getPeptidesByCategory, Peptide } from '@/utils/api';
 
 export default function HomeScreen() {
-  const colorScheme = useColorScheme();
-  const theme = useTheme();
   const router = useRouter();
-  const themeColors = colorScheme === 'dark' ? colors.dark : colors.light;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
-  const [searchQuery, setSearchQuery] = useState('');
   const [peptides, setPeptides] = useState<Peptide[]>([]);
   const [filteredPeptides, setFilteredPeptides] = useState<Peptide[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const categories = [
-    'All',
-    'GLP-1',
-    'Growth Hormone',
-    'Cognitive',
-    'Recovery',
-    'Anti-Aging',
-    'Performance',
-    'Immune',
-    'Metabolic',
-    'Other'
-  ];
+  const categories = ['All', 'GLP-1', 'Growth Hormone', 'Healing', 'Skin & Cosmetic', 'Performance', 'Metabolic', 'Immune', 'Cognitive'];
 
   useEffect(() => {
-    console.log('HomeScreen mounted - fetching peptides');
+    console.log('HomeScreen mounted, fetching peptides...');
     fetchPeptides();
   }, []);
 
   useEffect(() => {
-    console.log('Search query or category changed:', searchQuery, selectedCategory);
-    filterPeptides();
-  }, [searchQuery, peptides, selectedCategory]);
+    console.log('Filtering peptides. Search:', searchQuery, 'Category:', selectedCategory, 'Total peptides:', peptides.length);
+    fetchFilteredPeptides();
+  }, [searchQuery, selectedCategory]);
 
   const fetchPeptides = async () => {
     try {
-      console.log('[HomeScreen] Fetching peptides from API');
-      setLoading(true);
+      console.log('Calling getAllPeptides API...');
       setError(null);
-      
       const data = await getAllPeptides();
+      console.log('Received peptides:', data.length);
       setPeptides(data);
-      console.log('[HomeScreen] Peptides loaded:', data.length);
-      
-      if (data.length === 0) {
-        setError('No peptides found in the database. The database may need to be seeded.');
-      }
-    } catch (error) {
-      console.error('[HomeScreen] Error fetching peptides:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load peptides';
-      setError(errorMessage);
-      setPeptides([]);
-    } finally {
+      setFilteredPeptides(data);
       setLoading(false);
+      setRefreshing(false);
+    } catch (err) {
+      console.error('Error fetching peptides:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load peptides';
+      setError(errorMessage);
+      setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const filterPeptides = () => {
-    let filtered = peptides;
+  const fetchFilteredPeptides = async () => {
+    try {
+      setError(null);
+      let data: Peptide[];
 
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(p => p.category === selectedCategory);
+      // Use backend API for filtering when possible
+      if (searchQuery && selectedCategory && selectedCategory !== 'All') {
+        // Search first, then filter client-side by category
+        console.log('Searching with query:', searchQuery);
+        const searchResults = await searchPeptides(searchQuery);
+        data = searchResults.filter(p => p.category === selectedCategory);
+      } else if (searchQuery) {
+        // Use search endpoint
+        console.log('Searching with query:', searchQuery);
+        data = await searchPeptides(searchQuery);
+      } else if (selectedCategory && selectedCategory !== 'All') {
+        // Use category endpoint
+        console.log('Filtering by category:', selectedCategory);
+        data = await getPeptidesByCategory(selectedCategory);
+      } else {
+        // Show all peptides
+        data = peptides;
+      }
+
+      console.log('Filtered results:', data.length);
+      setFilteredPeptides(data);
+    } catch (err) {
+      console.error('Error filtering peptides:', err);
+      // Fallback to showing all peptides on error
+      setFilteredPeptides(peptides);
     }
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        p =>
-          p.name.toLowerCase().includes(query) ||
-          p.category.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query)
-      );
-    }
-
-    setFilteredPeptides(filtered);
-    console.log('Filtered peptides:', filtered.length);
   };
 
   const handlePeptidePress = (peptide: Peptide) => {
     console.log('User tapped peptide:', peptide.name);
     router.push({
       pathname: '/peptide-detail',
-      params: { peptideId: peptide.id },
+      params: { id: peptide.id }
     });
   };
 
-  const renderPeptideCard = (peptide: Peptide, index: number) => {
-    const benefitsList = peptide.benefits.split(',').slice(0, 3);
-    const benefitsText = benefitsList.join(', ');
-    const dosageText = `${peptide.dosageMin} - ${peptide.dosageMax}`;
-
-    return (
-      <TouchableOpacity
-        key={index}
-        style={[styles.peptideCard, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}
-        onPress={() => handlePeptidePress(peptide)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.cardHeader}>
-          <View style={styles.cardTitleRow}>
-            <Text style={[styles.peptideName, { color: themeColors.text }]}>{peptide.name}</Text>
-            <View style={[styles.categoryBadge, { backgroundColor: themeColors.highlight }]}>
-              <Text style={[styles.categoryText, { color: themeColors.primary }]}>{peptide.category}</Text>
-            </View>
-          </View>
-          <Text style={[styles.peptideDescription, { color: themeColors.textSecondary }]} numberOfLines={2}>
-            {peptide.description}
-          </Text>
-        </View>
-
-        <View style={styles.cardDivider} />
-
-        <View style={styles.infoRow}>
-          <IconSymbol
-            android_material_icon_name="medication"
-            ios_icon_name="pills.fill"
-            size={16}
-            color={themeColors.primary}
-          />
-          <Text style={[styles.infoLabel, { color: themeColors.textSecondary }]}>Dosage:</Text>
-          <Text style={[styles.infoValue, { color: themeColors.text }]}>{dosageText}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <IconSymbol
-            android_material_icon_name="schedule"
-            ios_icon_name="clock.fill"
-            size={16}
-            color={themeColors.secondary}
-          />
-          <Text style={[styles.infoLabel, { color: themeColors.textSecondary }]}>Frequency:</Text>
-          <Text style={[styles.infoValue, { color: themeColors.text }]}>{peptide.frequency}</Text>
-        </View>
-
-        <View style={styles.benefitsRow}>
-          <IconSymbol
-            android_material_icon_name="check-circle"
-            ios_icon_name="checkmark.circle.fill"
-            size={16}
-            color={themeColors.accent}
-          />
-          <Text style={[styles.benefitsText, { color: themeColors.textSecondary }]} numberOfLines={2}>
-            {benefitsText}
-          </Text>
-        </View>
-
-        <View style={styles.viewMoreRow}>
-          <Text style={[styles.viewMoreText, { color: themeColors.primary }]}>View Details</Text>
-          <IconSymbol
-            android_material_icon_name="arrow-forward"
-            ios_icon_name="chevron.right"
-            size={16}
-            color={themeColors.primary}
-          />
-        </View>
-      </TouchableOpacity>
-    );
+  const onRefresh = () => {
+    console.log('User pulled to refresh');
+    setRefreshing(true);
+    fetchPeptides();
   };
 
-  return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <Stack.Screen
-        options={{
-          title: 'Peptide Guide',
-          headerShown: true,
-          headerStyle: { backgroundColor: themeColors.card },
-          headerTintColor: themeColors.text,
-        }}
-      />
+  const bgColor = isDark ? colors.backgroundDark : colors.backgroundLight;
+  const textColor = isDark ? colors.textDark : colors.textLight;
+  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
+  const borderColor = isDark ? '#38383a' : '#e5e5ea';
 
-      <View style={[styles.searchContainer, { backgroundColor: themeColors.card, borderBottomColor: themeColors.border }]}>
-        <View style={[styles.searchBar, { backgroundColor: themeColors.background, borderColor: themeColors.border }]}>
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: bgColor }]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: textColor }]}>Loading peptides...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: bgColor }]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.centerContent}>
           <IconSymbol
-            android_material_icon_name="search"
+            ios_icon_name="exclamationmark.triangle"
+            android_material_icon_name="warning"
+            size={48}
+            color={colors.error}
+          />
+          <Text style={[styles.errorTitle, { color: textColor }]}>Error Loading Peptides</Text>
+          <Text style={[styles.errorMessage, { color: textColor }]}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={fetchPeptides}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  const noPeptidesMessage = peptides.length === 0 
+    ? 'Database is being seeded with peptides. Please wait a moment and pull down to refresh.'
+    : 'No peptides match your search.';
+
+  return (
+    <View style={[styles.container, { backgroundColor: bgColor }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: bgColor, borderBottomColor: borderColor }]}>
+        <Text style={[styles.headerTitle, { color: textColor }]}>Peptide Guide</Text>
+        <Text style={[styles.headerSubtitle, { color: textColor }]}>
+          {peptides.length} peptides available
+        </Text>
+      </View>
+
+      {/* Search Bar */}
+      <View style={[styles.searchContainer, { backgroundColor: bgColor }]}>
+        <View style={[styles.searchBar, { backgroundColor: cardBg, borderColor }]}>
+          <IconSymbol
             ios_icon_name="magnifyingglass"
+            android_material_icon_name="search"
             size={20}
-            color={themeColors.textSecondary}
+            color={colors.textSecondary}
           />
           <TextInput
-            style={[styles.searchInput, { color: themeColors.text }]}
+            style={[styles.searchInput, { color: textColor }]}
             placeholder="Search peptides..."
-            placeholderTextColor={themeColors.textSecondary}
+            placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
               <IconSymbol
-                android_material_icon_name="close"
                 ios_icon_name="xmark.circle.fill"
+                android_material_icon_name="cancel"
                 size={20}
-                color={themeColors.textSecondary}
+                color={colors.textSecondary}
               />
             </TouchableOpacity>
           )}
         </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesScroll}
-          contentContainerStyle={styles.categoriesContent}
-        >
-          {categories.map((category, index) => {
-            const isSelected = selectedCategory === category;
-            return (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.categoryChip,
-                  {
-                    backgroundColor: isSelected ? themeColors.primary : themeColors.background,
-                    borderColor: themeColors.border,
-                  },
-                ]}
-                onPress={() => {
-                  console.log('User selected category:', category);
-                  setSelectedCategory(category);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.categoryChipText,
-                    { color: isSelected ? '#FFFFFF' : themeColors.text },
-                  ]}
-                >
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
       </View>
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={themeColors.primary} />
-          <Text style={[styles.loadingText, { color: themeColors.textSecondary }]}>Loading peptides...</Text>
-        </View>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <IconSymbol
-            android_material_icon_name="error"
-            ios_icon_name="exclamationmark.triangle.fill"
-            size={64}
-            color={themeColors.error}
+      {/* Category Filter */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryScroll}
+        contentContainerStyle={styles.categoryContainer}
+      >
+        {categories.map((category) => {
+          const isSelected = selectedCategory === category;
+          return (
+            <TouchableOpacity
+              key={category}
+              style={[
+                styles.categoryChip,
+                {
+                  backgroundColor: isSelected ? colors.primary : cardBg,
+                  borderColor: isSelected ? colors.primary : borderColor,
+                }
+              ]}
+              onPress={() => {
+                console.log('User selected category:', category);
+                setSelectedCategory(category);
+              }}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  { color: isSelected ? '#ffffff' : textColor }
+                ]}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* Peptide List */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.listContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
           />
-          <Text style={[styles.errorTitle, { color: themeColors.text }]}>Unable to Load Peptides</Text>
-          <Text style={[styles.errorText, { color: themeColors.textSecondary }]}>
-            {error}
-          </Text>
-          <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: themeColors.primary }]}
-            onPress={fetchPeptides}
-          >
+        }
+      >
+        {filteredPeptides.length === 0 ? (
+          <View style={styles.emptyState}>
             <IconSymbol
-              android_material_icon_name="refresh"
-              ios_icon_name="arrow.clockwise"
-              size={20}
-              color="#FFFFFF"
+              ios_icon_name="tray"
+              android_material_icon_name="inbox"
+              size={64}
+              color={colors.textSecondary}
             />
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {filteredPeptides.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <IconSymbol
-                android_material_icon_name="search-off"
-                ios_icon_name="magnifyingglass"
-                size={64}
-                color={themeColors.textSecondary}
-              />
-              <Text style={[styles.emptyTitle, { color: themeColors.text }]}>No peptides found</Text>
-              <Text style={[styles.emptyText, { color: themeColors.textSecondary }]}>
-                Try adjusting your search or category filter
-              </Text>
-            </View>
-          ) : (
-            <>
-              <Text style={[styles.resultsCount, { color: themeColors.textSecondary }]}>
-                {filteredPeptides.length} peptides found
-              </Text>
-              {filteredPeptides.map((peptide, index) => renderPeptideCard(peptide, index))}
-            </>
-          )}
-        </ScrollView>
-      )}
+            <Text style={[styles.emptyText, { color: textColor }]}>
+              {noPeptidesMessage}
+            </Text>
+            {peptides.length === 0 && (
+              <TouchableOpacity
+                style={styles.refreshButton}
+                onPress={onRefresh}
+              >
+                <IconSymbol
+                  ios_icon_name="arrow.clockwise"
+                  android_material_icon_name="refresh"
+                  size={20}
+                  color="#ffffff"
+                />
+                <Text style={styles.refreshButtonText}>Refresh</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          filteredPeptides.map((peptide, index) => {
+            const benefitsPreview = peptide.benefits.length > 100
+              ? peptide.benefits.substring(0, 100) + '...'
+              : peptide.benefits;
+
+            return (
+              <TouchableOpacity
+                key={peptide.id}
+                style={[styles.peptideCard, { backgroundColor: cardBg, borderColor }]}
+                onPress={() => handlePeptidePress(peptide)}
+              >
+                <View style={styles.cardHeader}>
+                  <Text style={[styles.peptideName, { color: textColor }]}>
+                    {peptide.name}
+                  </Text>
+                  <View style={[styles.categoryBadge, { backgroundColor: colors.primary + '20' }]}>
+                    <Text style={[styles.categoryBadgeText, { color: colors.primary }]}>
+                      {peptide.category}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.peptideBenefits, { color: colors.textSecondary }]}>
+                  {benefitsPreview}
+                </Text>
+                <View style={styles.cardFooter}>
+                  <View style={styles.dosageInfo}>
+                    <IconSymbol
+                      ios_icon_name="syringe"
+                      android_material_icon_name="medication"
+                      size={16}
+                      color={colors.textSecondary}
+                    />
+                    <Text style={[styles.dosageText, { color: colors.textSecondary }]}>
+                      {peptide.dosageMin}
+                    </Text>
+                    <Text style={[styles.dosageText, { color: colors.textSecondary }]}>-</Text>
+                    <Text style={[styles.dosageText, { color: colors.textSecondary }]}>
+                      {peptide.dosageMax}
+                    </Text>
+                  </View>
+                  <IconSymbol
+                    ios_icon_name="chevron.right"
+                    android_material_icon_name="chevron-right"
+                    size={20}
+                    color={colors.textSecondary}
+                  />
+                </View>
+              </TouchableOpacity>
+            );
+          })
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -320,193 +329,164 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  searchContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
     borderBottomWidth: 1,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    opacity: 0.6,
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    marginBottom: 12,
+    gap: 8,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 8,
     fontSize: 16,
   },
-  categoriesScroll: {
-    marginTop: 4,
+  categoryScroll: {
+    maxHeight: 50,
   },
-  categoriesContent: {
-    paddingRight: 16,
+  categoryContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    gap: 8,
   },
   categoryChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 8,
     borderWidth: 1,
+    marginRight: 8,
   },
-  categoryChipText: {
+  categoryText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 16,
+  listContainer: {
+    padding: 20,
   },
-  resultsCount: {
-    fontSize: 14,
-    marginBottom: 12,
-    fontWeight: '500',
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 24,
+    paddingHorizontal: 40,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  refreshButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   peptideCard: {
-    borderRadius: 16,
     padding: 16,
+    borderRadius: 12,
     marginBottom: 12,
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
   },
   cardHeader: {
-    marginBottom: 12,
-  },
-  cardTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
   peptideName: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: 'bold',
     flex: 1,
+    marginRight: 8,
   },
   categoryBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    marginLeft: 8,
   },
-  categoryText: {
+  categoryBadgeText: {
     fontSize: 12,
     fontWeight: '600',
   },
-  peptideDescription: {
+  peptideBenefits: {
     fontSize: 14,
     lineHeight: 20,
-  },
-  cardDivider: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 12,
-    opacity: 0.3,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  infoLabel: {
-    fontSize: 14,
-    marginLeft: 8,
-    fontWeight: '500',
-  },
-  infoValue: {
-    fontSize: 14,
-    marginLeft: 6,
-    fontWeight: '600',
-  },
-  benefitsRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: 4,
     marginBottom: 12,
   },
-  benefitsText: {
-    fontSize: 13,
-    marginLeft: 8,
-    flex: 1,
-    lineHeight: 18,
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  viewMoreRow: {
+  dosageInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginTop: 4,
+    gap: 6,
   },
-  viewMoreText: {
+  dosageText: {
     fontSize: 14,
-    fontWeight: '600',
-    marginRight: 4,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 15,
-    textAlign: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 20,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  errorText: {
-    fontSize: 15,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 22,
-  },
-  retryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    gap: 8,
-  },
-  retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
