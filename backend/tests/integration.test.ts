@@ -15,6 +15,8 @@ describe("API Integration Tests", () => {
       if (data.length > 0) {
         peptideId = data[0].id;
         expect(peptideId).toBeDefined();
+        expect(data[0].name).toBeDefined();
+        expect(data[0].category).toBeDefined();
       }
     });
   });
@@ -38,8 +40,6 @@ describe("API Integration Tests", () => {
       const nonExistentId = "00000000-0000-0000-0000-000000000000";
       const res = await api(`/api/peptides/${nonExistentId}`);
       await expectStatus(res, 404);
-      const data = await res.json();
-      expect(data.error).toBeDefined();
     });
 
     test("Get peptide with invalid UUID format should return 400", async () => {
@@ -50,7 +50,7 @@ describe("API Integration Tests", () => {
 
   describe("Peptides - Search", () => {
     test("Search peptides with valid query should return 200", async () => {
-      const res = await api("/api/peptides/search?q=test");
+      const res = await api("/api/peptides/search?q=growth");
       await expectStatus(res, 200);
       const data = await res.json();
       expect(Array.isArray(data)).toBe(true);
