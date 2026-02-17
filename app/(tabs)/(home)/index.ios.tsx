@@ -62,12 +62,13 @@ export default function HomeScreen() {
   const filterPeptides = () => {
     let filtered = peptides;
 
-    const searchLower = searchQuery.toLowerCase();
     if (searchQuery) {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchLower) ||
-        p.description.toLowerCase().includes(searchLower) ||
-        p.benefits.toLowerCase().includes(searchLower)
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(query) ||
+        p.description.toLowerCase().includes(query) ||
+        p.benefits.toLowerCase().includes(query) ||
+        p.category.toLowerCase().includes(query)
       );
     }
 
@@ -95,8 +96,9 @@ export default function HomeScreen() {
 
   const bgColor = isDark ? colors.backgroundDark : colors.backgroundLight;
   const textColor = isDark ? colors.textDark : colors.textLight;
-  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
-  const borderColor = isDark ? '#38383a' : '#e5e5ea';
+  const cardBg = isDark ? '#1C1C1E' : '#FFFFFF';
+  const borderColor = isDark ? '#38383A' : '#E0E0E0';
+  const secondaryTextColor = isDark ? '#8E8E93' : '#666666';
 
   if (loading) {
     return (
@@ -142,27 +144,26 @@ export default function HomeScreen() {
     <View style={[styles.container, { backgroundColor: bgColor }]}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      {/* Header */}
       <View style={[styles.header, { backgroundColor: bgColor, borderBottomColor: borderColor }]}>
         <Text style={[styles.headerTitle, { color: textColor }]}>Peptide Guide</Text>
-        <Text style={[styles.headerSubtitle, { color: textColor }]}>
-          {peptides.length} peptides available
+        <Text style={[styles.headerSubtitle, { color: secondaryTextColor }]}>
+          {peptides.length}
         </Text>
+        <Text style={[styles.headerSubtitle, { color: secondaryTextColor }]}> peptides available</Text>
       </View>
 
-      {/* Search Bar */}
       <View style={[styles.searchContainer, { backgroundColor: bgColor }]}>
         <View style={[styles.searchBar, { backgroundColor: cardBg, borderColor }]}>
           <IconSymbol
             ios_icon_name="magnifyingglass"
             android_material_icon_name="search"
             size={20}
-            color={colors.textSecondary}
+            color={secondaryTextColor}
           />
           <TextInput
             style={[styles.searchInput, { color: textColor }]}
             placeholder="Search peptides..."
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={secondaryTextColor}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -172,14 +173,13 @@ export default function HomeScreen() {
                 ios_icon_name="xmark.circle.fill"
                 android_material_icon_name="cancel"
                 size={20}
-                color={colors.textSecondary}
+                color={secondaryTextColor}
               />
             </TouchableOpacity>
           )}
         </View>
       </View>
 
-      {/* Category Filter */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -206,7 +206,7 @@ export default function HomeScreen() {
               <Text
                 style={[
                   styles.categoryText,
-                  { color: isSelected ? '#ffffff' : textColor }
+                  { color: isSelected ? '#FFFFFF' : textColor }
                 ]}
               >
                 {category}
@@ -216,7 +216,6 @@ export default function HomeScreen() {
         })}
       </ScrollView>
 
-      {/* Peptide List */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.listContainer}
@@ -234,7 +233,7 @@ export default function HomeScreen() {
               ios_icon_name="tray"
               android_material_icon_name="inbox"
               size={64}
-              color={colors.textSecondary}
+              color={secondaryTextColor}
             />
             <Text style={[styles.emptyText, { color: textColor }]}>
               {noPeptidesMessage}
@@ -248,14 +247,14 @@ export default function HomeScreen() {
                   ios_icon_name="arrow.clockwise"
                   android_material_icon_name="refresh"
                   size={20}
-                  color="#ffffff"
+                  color="#FFFFFF"
                 />
                 <Text style={styles.refreshButtonText}>Refresh</Text>
               </TouchableOpacity>
             )}
           </View>
         ) : (
-          filteredPeptides.map((peptide, index) => {
+          filteredPeptides.map((peptide) => {
             const benefitsPreview = peptide.benefits.length > 100
               ? peptide.benefits.substring(0, 100) + '...'
               : peptide.benefits;
@@ -276,7 +275,7 @@ export default function HomeScreen() {
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.peptideBenefits, { color: colors.textSecondary }]}>
+                <Text style={[styles.peptideBenefits, { color: secondaryTextColor }]}>
                   {benefitsPreview}
                 </Text>
                 <View style={styles.cardFooter}>
@@ -285,13 +284,13 @@ export default function HomeScreen() {
                       ios_icon_name="syringe"
                       android_material_icon_name="medication"
                       size={16}
-                      color={colors.textSecondary}
+                      color={secondaryTextColor}
                     />
-                    <Text style={[styles.dosageText, { color: colors.textSecondary }]}>
+                    <Text style={[styles.dosageText, { color: secondaryTextColor }]}>
                       {peptide.dosageMin}
                     </Text>
-                    <Text style={[styles.dosageText, { color: colors.textSecondary }]}>-</Text>
-                    <Text style={[styles.dosageText, { color: colors.textSecondary }]}>
+                    <Text style={[styles.dosageText, { color: secondaryTextColor }]}> - </Text>
+                    <Text style={[styles.dosageText, { color: secondaryTextColor }]}>
                       {peptide.dosageMax}
                     </Text>
                   </View>
@@ -299,7 +298,7 @@ export default function HomeScreen() {
                     ios_icon_name="chevron.right"
                     android_material_icon_name="chevron-right"
                     size={20}
-                    color={colors.textSecondary}
+                    color={secondaryTextColor}
                   />
                 </View>
               </TouchableOpacity>
@@ -343,7 +342,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   retryButtonText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -360,7 +359,6 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 14,
-    opacity: 0.6,
   },
   searchContainer: {
     paddingHorizontal: 20,
@@ -426,7 +424,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   refreshButtonText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -470,7 +468,7 @@ const styles = StyleSheet.create({
   dosageInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   dosageText: {
     fontSize: 14,

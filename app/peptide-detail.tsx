@@ -48,8 +48,9 @@ export default function PeptideDetailScreen() {
 
   const bgColor = isDark ? colors.backgroundDark : colors.backgroundLight;
   const textColor = isDark ? colors.textDark : colors.textLight;
-  const cardBg = isDark ? '#1c1c1e' : '#ffffff';
-  const borderColor = isDark ? '#38383a' : '#e5e5ea';
+  const cardBg = isDark ? '#1C1C1E' : '#FFFFFF';
+  const borderColor = isDark ? '#38383A' : '#E0E0E0';
+  const secondaryTextColor = isDark ? '#8E8E93' : '#666666';
 
   if (loading) {
     return (
@@ -111,7 +112,6 @@ export default function PeptideDetailScreen() {
         }}
       />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {/* Header Card */}
         <View style={[styles.headerCard, { backgroundColor: cardBg, borderColor }]}>
           <Text style={[styles.peptideName, { color: textColor }]}>{peptide.name}</Text>
           <View style={[styles.categoryBadge, { backgroundColor: colors.primary + '20' }]}>
@@ -121,7 +121,6 @@ export default function PeptideDetailScreen() {
           </View>
         </View>
 
-        {/* Description */}
         <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
           <View style={styles.sectionHeader}>
             <IconSymbol
@@ -135,7 +134,6 @@ export default function PeptideDetailScreen() {
           <Text style={[styles.sectionText, { color: textColor }]}>{peptide.description}</Text>
         </View>
 
-        {/* Benefits */}
         <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
           <View style={styles.sectionHeader}>
             <IconSymbol
@@ -149,7 +147,6 @@ export default function PeptideDetailScreen() {
           <Text style={[styles.sectionText, { color: textColor }]}>{peptide.benefits}</Text>
         </View>
 
-        {/* Dosage Information */}
         <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
           <View style={styles.sectionHeader}>
             <IconSymbol
@@ -162,35 +159,34 @@ export default function PeptideDetailScreen() {
           </View>
           <View style={styles.dosageGrid}>
             <View style={styles.dosageItem}>
-              <Text style={[styles.dosageLabel, { color: colors.textSecondary }]}>Dosage Range</Text>
+              <Text style={[styles.dosageLabel, { color: secondaryTextColor }]}>Dosage Range</Text>
               <Text style={[styles.dosageValue, { color: textColor }]}>
                 {peptide.dosageMin}
               </Text>
-              <Text style={[styles.dosageValue, { color: textColor }]}>to</Text>
+              <Text style={[styles.dosageValue, { color: textColor }]}> to </Text>
               <Text style={[styles.dosageValue, { color: textColor }]}>
                 {peptide.dosageMax}
               </Text>
             </View>
             <View style={styles.dosageItem}>
-              <Text style={[styles.dosageLabel, { color: colors.textSecondary }]}>Frequency</Text>
+              <Text style={[styles.dosageLabel, { color: secondaryTextColor }]}>Frequency</Text>
               <Text style={[styles.dosageValue, { color: textColor }]}>{peptide.frequency}</Text>
             </View>
             <View style={styles.dosageItem}>
-              <Text style={[styles.dosageLabel, { color: colors.textSecondary }]}>Route</Text>
+              <Text style={[styles.dosageLabel, { color: secondaryTextColor }]}>Route</Text>
               <Text style={[styles.dosageValue, { color: textColor }]}>
                 {peptide.administrationRoute}
               </Text>
             </View>
             {peptide.timing && (
               <View style={styles.dosageItem}>
-                <Text style={[styles.dosageLabel, { color: colors.textSecondary }]}>Timing</Text>
+                <Text style={[styles.dosageLabel, { color: secondaryTextColor }]}>Timing</Text>
                 <Text style={[styles.dosageValue, { color: textColor }]}>{peptide.timing}</Text>
               </View>
             )}
           </View>
         </View>
 
-        {/* Side Effects */}
         {peptide.sideEffects && (
           <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
             <View style={styles.sectionHeader}>
@@ -206,7 +202,6 @@ export default function PeptideDetailScreen() {
           </View>
         )}
 
-        {/* Disclaimer */}
         <View style={[styles.disclaimer, { backgroundColor: colors.error + '10', borderColor: colors.error + '30' }]}>
           <IconSymbol
             ios_icon_name="info.circle"
@@ -255,7 +250,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   retryButtonText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
