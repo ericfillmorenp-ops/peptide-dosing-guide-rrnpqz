@@ -1,8 +1,8 @@
 import { describe, test, expect } from "bun:test";
-import { api, authenticatedApi, signUpTestUser, expectStatus, connectWebSocket, connectAuthenticatedWebSocket, waitForMessage } from "./helpers";
+import { api, expectStatus } from "./helpers";
 
 describe("API Integration Tests", () => {
-  // Shared state for chaining tests (e.g., created resource IDs, auth tokens)
+  // Shared state for chaining tests (e.g., created resource IDs)
   let peptideId: string;
 
   describe("Peptides - Get All", () => {
@@ -79,6 +79,13 @@ describe("API Integration Tests", () => {
 
     test("Get peptides by non-existent category should return 200 with empty array", async () => {
       const res = await api("/api/peptides/category/nonexistent-category-xyz");
+      await expectStatus(res, 200);
+      const data = await res.json();
+      expect(Array.isArray(data)).toBe(true);
+    });
+
+    test("Get peptides by category with special characters should return 200", async () => {
+      const res = await api("/api/peptides/category/category-with-dashes");
       await expectStatus(res, 200);
       const data = await res.json();
       expect(Array.isArray(data)).toBe(true);
