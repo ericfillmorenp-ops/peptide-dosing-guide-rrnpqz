@@ -12,20 +12,7 @@ import {
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
-
-interface Peptide {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  benefits: string;
-  sideEffects: string;
-  dosageMin: string;
-  dosageMax: string;
-  frequency: string;
-  timing: string;
-  administrationRoute: string;
-}
+import { getPeptideById, Peptide } from '@/utils/api';
 
 export default function PeptideDetailScreen() {
   const colorScheme = useColorScheme();
@@ -35,6 +22,7 @@ export default function PeptideDetailScreen() {
 
   const [peptide, setPeptide] = useState<Peptide | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('PeptideDetailScreen mounted for peptide ID:', peptideId);
@@ -43,30 +31,18 @@ export default function PeptideDetailScreen() {
 
   const fetchPeptideDetails = async () => {
     try {
-      console.log('Fetching peptide details from API');
+      console.log('[PeptideDetail] Fetching peptide details from API');
       setLoading(true);
-      // TODO: Backend Integration - GET /api/peptides/:id to fetch peptide details
-      // Returns: { id, name, description, category, benefits, sideEffects, dosageMin, dosageMax, frequency, timing, administrationRoute }
+      setError(null);
       
-      // Mock data for now
-      const mockPeptide: Peptide = {
-        id: peptideId as string,
-        name: 'Semaglutide',
-        description: 'GLP-1 receptor agonist used for weight management and blood sugar control. It works by mimicking the GLP-1 hormone that is released in the gastrointestinal tract in response to eating.',
-        category: 'GLP-1',
-        benefits: 'Weight loss, Improved glycemic control, Reduced appetite, Cardiovascular benefits, Lower blood pressure',
-        sideEffects: 'Nausea, Vomiting, Diarrhea, Constipation, Abdominal pain, Headache',
-        dosageMin: '0.25mg',
-        dosageMax: '2.4mg',
-        frequency: 'Once weekly',
-        timing: 'Any time of day',
-        administrationRoute: 'Subcutaneous injection',
-      };
-      
-      setPeptide(mockPeptide);
-      console.log('Peptide details loaded:', mockPeptide.name);
+      const data = await getPeptideById(peptideId as string);
+      setPeptide(data);
+      console.log('[PeptideDetail] Peptide details loaded:', data.name);
     } catch (error) {
-      console.error('Error fetching peptide details:', error);
+      console.error('[PeptideDetail] Error fetching peptide details:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load peptide details';
+      setError(errorMessage);
+      setPeptide(null);
     } finally {
       setLoading(false);
     }
@@ -105,24 +81,45 @@ export default function PeptideDetailScreen() {
         <View style={styles.errorContainer}>
           <IconSymbol
             android_material_icon_name="error"
-            ios_icon_name="exclamationmark.triangle"
+            ios_icon_name="exclamationmark.triangle.fill"
             size={64}
             color={themeColors.error}
           />
-          <Text style={[styles.errorTitle, { color: themeColors.text }]}>Peptide not found</Text>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: themeColors.primary }]}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
+          <Text style={[styles.errorTitle, { color: themeColors.text }]}>
+            {error || 'Peptide not found'}
+          </Text>
+          <Text style={[styles.errorText, { color: themeColors.textSecondary }]}>
+            {error ? 'There was an error loading the peptide details.' : 'The requested peptide could not be found.'}
+          </Text>
+          <View style={styles.errorButtons}>
+            <TouchableOpacity
+              style={[styles.retryButton, { backgroundColor: themeColors.primary }]}
+              onPress={fetchPeptideDetails}
+            >
+              <IconSymbol
+                android_material_icon_name="refresh"
+                ios_icon_name="arrow.clockwise"
+                size={20}
+                color="#FFFFFF"
+              />
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.backButton, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}
+              onPress={() => router.back()}
+            >
+              <Text style={[styles.backButtonText, { color: themeColors.text }]}>Go Back</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
   }
 
   const benefitsList = peptide.benefits.split(',').map(b => b.trim());
-  const sideEffectsList = peptide.sideEffects.split(',').map(s => s.trim());
+  const sideEffectsList = peptide.sideEffects 
+    ? peptide.sideEffects.split(',').map(s => s.trim())
+    : ['No known side effects reported'];
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -176,7 +173,9 @@ export default function PeptideDetailScreen() {
 
             <View style={styles.infoItem}>
               <Text style={[styles.infoLabel, { color: themeColors.textSecondary }]}>Timing</Text>
-              <Text style={[styles.infoValue, { color: themeColors.text }]}>{peptide.timing}</Text>
+              <Text style={[styles.infoValue, { color: themeColors.text }]}>
+                {peptide.timing || 'As directed'}
+              </Text>
             </View>
 
             <View style={styles.infoItem}>
@@ -375,15 +374,39 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     marginTop: 16,
-    marginBottom: 24,
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  backButton: {
-    paddingHorizontal: 24,
+  errorText: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  errorButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
+    gap: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  backButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   backButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },

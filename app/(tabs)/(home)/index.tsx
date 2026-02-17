@@ -15,20 +15,7 @@ import { useTheme } from '@react-navigation/native';
 import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
-
-interface Peptide {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  benefits: string;
-  sideEffects: string;
-  dosageMin: string;
-  dosageMax: string;
-  frequency: string;
-  timing: string;
-  administrationRoute: string;
-}
+import { getAllPeptides, Peptide } from '@/utils/api';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -40,9 +27,21 @@ export default function HomeScreen() {
   const [peptides, setPeptides] = useState<Peptide[]>([]);
   const [filteredPeptides, setFilteredPeptides] = useState<Peptide[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-  const categories = ['All', 'GLP-1', 'Growth Hormone', 'Cognitive', 'Recovery', 'Other'];
+  const categories = [
+    'All',
+    'GLP-1',
+    'Growth Hormone',
+    'Cognitive',
+    'Recovery',
+    'Anti-Aging',
+    'Performance',
+    'Immune',
+    'Metabolic',
+    'Other'
+  ];
 
   useEffect(() => {
     console.log('HomeScreen mounted - fetching peptides');
@@ -56,58 +55,22 @@ export default function HomeScreen() {
 
   const fetchPeptides = async () => {
     try {
-      console.log('Fetching peptides from API');
+      console.log('[HomeScreen] Fetching peptides from API');
       setLoading(true);
-      // TODO: Backend Integration - GET /api/peptides to fetch all peptides
-      // Returns: [{ id, name, description, category, benefits, sideEffects, dosageMin, dosageMax, frequency, timing, administrationRoute }]
+      setError(null);
       
-      // Mock data for now
-      const mockPeptides: Peptide[] = [
-        {
-          id: '1',
-          name: 'Semaglutide',
-          description: 'GLP-1 receptor agonist used for weight management and blood sugar control',
-          category: 'GLP-1',
-          benefits: 'Weight loss, Improved glycemic control, Reduced appetite, Cardiovascular benefits',
-          sideEffects: 'Nausea, Vomiting, Diarrhea, Constipation',
-          dosageMin: '0.25mg',
-          dosageMax: '2.4mg',
-          frequency: 'Once weekly',
-          timing: 'Any time of day',
-          administrationRoute: 'Subcutaneous injection',
-        },
-        {
-          id: '2',
-          name: 'CJC-1295',
-          description: 'Growth hormone releasing hormone analog that increases growth hormone production',
-          category: 'Growth Hormone',
-          benefits: 'Increased muscle mass, Fat loss, Improved recovery, Better sleep quality',
-          sideEffects: 'Injection site reactions, Water retention, Numbness',
-          dosageMin: '1mg',
-          dosageMax: '2mg',
-          frequency: 'Twice weekly',
-          timing: 'Before bed',
-          administrationRoute: 'Subcutaneous injection',
-        },
-        {
-          id: '3',
-          name: 'BPC-157',
-          description: 'Body protection compound that promotes healing and tissue repair',
-          category: 'Recovery',
-          benefits: 'Accelerated healing, Reduced inflammation, Gut health, Joint repair',
-          sideEffects: 'Minimal side effects reported, Possible fatigue',
-          dosageMin: '200mcg',
-          dosageMax: '500mcg',
-          frequency: 'Once or twice daily',
-          timing: 'Morning and evening',
-          administrationRoute: 'Subcutaneous or intramuscular injection',
-        },
-      ];
+      const data = await getAllPeptides();
+      setPeptides(data);
+      console.log('[HomeScreen] Peptides loaded:', data.length);
       
-      setPeptides(mockPeptides);
-      console.log('Peptides loaded:', mockPeptides.length);
+      if (data.length === 0) {
+        setError('No peptides found in the database. The database may need to be seeded.');
+      }
     } catch (error) {
-      console.error('Error fetching peptides:', error);
+      console.error('[HomeScreen] Error fetching peptides:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load peptides';
+      setError(errorMessage);
+      setPeptides([]);
     } finally {
       setLoading(false);
     }
@@ -294,6 +257,31 @@ export default function HomeScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={themeColors.primary} />
           <Text style={[styles.loadingText, { color: themeColors.textSecondary }]}>Loading peptides...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <IconSymbol
+            android_material_icon_name="error"
+            ios_icon_name="exclamationmark.triangle.fill"
+            size={64}
+            color={themeColors.error}
+          />
+          <Text style={[styles.errorTitle, { color: themeColors.text }]}>Unable to Load Peptides</Text>
+          <Text style={[styles.errorText, { color: themeColors.textSecondary }]}>
+            {error}
+          </Text>
+          <TouchableOpacity
+            style={[styles.retryButton, { backgroundColor: themeColors.primary }]}
+            onPress={fetchPeptides}
+          >
+            <IconSymbol
+              android_material_icon_name="refresh"
+              ios_icon_name="arrow.clockwise"
+              size={20}
+              color="#FFFFFF"
+            />
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <ScrollView
@@ -487,5 +475,38 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -14,6 +14,7 @@ import { useTheme } from '@react-navigation/native';
 import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
+import Constants from 'expo-constants';
 
 interface Peptide {
   id: string;
@@ -29,6 +30,8 @@ interface Peptide {
   administrationRoute: string;
 }
 
+const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost:3000';
+
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const theme = useTheme();
@@ -41,7 +44,18 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-  const categories = ['All', 'GLP-1', 'Growth Hormone', 'Cognitive', 'Recovery', 'Other'];
+  const categories = [
+    'All',
+    'GLP-1',
+    'Growth Hormone',
+    'Cognitive',
+    'Recovery',
+    'Anti-Aging',
+    'Performance',
+    'Immune',
+    'Metabolic',
+    'Other'
+  ];
 
   useEffect(() => {
     console.log('HomeScreen mounted - fetching peptides');
@@ -60,53 +74,19 @@ export default function HomeScreen() {
       // TODO: Backend Integration - GET /api/peptides to fetch all peptides
       // Returns: [{ id, name, description, category, benefits, sideEffects, dosageMin, dosageMax, frequency, timing, administrationRoute }]
       
-      // Mock data for now
-      const mockPeptides: Peptide[] = [
-        {
-          id: '1',
-          name: 'Semaglutide',
-          description: 'GLP-1 receptor agonist used for weight management and blood sugar control',
-          category: 'GLP-1',
-          benefits: 'Weight loss, Improved glycemic control, Reduced appetite, Cardiovascular benefits',
-          sideEffects: 'Nausea, Vomiting, Diarrhea, Constipation',
-          dosageMin: '0.25mg',
-          dosageMax: '2.4mg',
-          frequency: 'Once weekly',
-          timing: 'Any time of day',
-          administrationRoute: 'Subcutaneous injection',
-        },
-        {
-          id: '2',
-          name: 'CJC-1295',
-          description: 'Growth hormone releasing hormone analog that increases growth hormone production',
-          category: 'Growth Hormone',
-          benefits: 'Increased muscle mass, Fat loss, Improved recovery, Better sleep quality',
-          sideEffects: 'Injection site reactions, Water retention, Numbness',
-          dosageMin: '1mg',
-          dosageMax: '2mg',
-          frequency: 'Twice weekly',
-          timing: 'Before bed',
-          administrationRoute: 'Subcutaneous injection',
-        },
-        {
-          id: '3',
-          name: 'BPC-157',
-          description: 'Body protection compound that promotes healing and tissue repair',
-          category: 'Recovery',
-          benefits: 'Accelerated healing, Reduced inflammation, Gut health, Joint repair',
-          sideEffects: 'Minimal side effects reported, Possible fatigue',
-          dosageMin: '200mcg',
-          dosageMax: '500mcg',
-          frequency: 'Once or twice daily',
-          timing: 'Morning and evening',
-          administrationRoute: 'Subcutaneous or intramuscular injection',
-        },
-      ];
+      const response = await fetch(`${BACKEND_URL}/api/peptides`);
       
-      setPeptides(mockPeptides);
-      console.log('Peptides loaded:', mockPeptides.length);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setPeptides(data);
+      console.log('Peptides loaded:', data.length);
     } catch (error) {
       console.error('Error fetching peptides:', error);
+      // Keep empty array on error
+      setPeptides([]);
     } finally {
       setLoading(false);
     }
@@ -222,7 +202,6 @@ export default function HomeScreen() {
           headerShown: true,
           headerStyle: { backgroundColor: themeColors.card },
           headerTintColor: themeColors.text,
-          headerLargeTitle: true,
         }}
       />
 
