@@ -8,6 +8,7 @@ console.log('[API] Backend URL configured:', BACKEND_URL);
 
 /**
  * Peptide interface matching the backend API schema
+ * Note: Backend API returns camelCase field names
  */
 export interface Peptide {
   id: string;

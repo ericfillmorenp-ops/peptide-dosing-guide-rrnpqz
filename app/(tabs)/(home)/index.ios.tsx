@@ -22,12 +22,12 @@ interface Peptide {
   description: string;
   category: string;
   benefits: string;
-  sideEffects: string;
-  dosageMin: string;
-  dosageMax: string;
+  side_effects: string;
+  dosage_min: string;
+  dosage_max: string;
   frequency: string;
   timing: string;
-  administrationRoute: string;
+  administration_route: string;
 }
 
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost:3000';
@@ -124,7 +124,7 @@ export default function HomeScreen() {
   const renderPeptideCard = (peptide: Peptide, index: number) => {
     const benefitsList = peptide.benefits.split(',').slice(0, 3);
     const benefitsText = benefitsList.join(', ');
-    const dosageText = `${peptide.dosageMin} - ${peptide.dosageMax}`;
+    const dosageText = `${peptide.dosage_min} - ${peptide.dosage_max}`;
 
     return (
       <TouchableOpacity
