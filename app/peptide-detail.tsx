@@ -147,6 +147,23 @@ export default function PeptideDetailScreen() {
           <Text style={[styles.sectionText, { color: textColor }]}>{peptide.benefits}</Text>
         </View>
 
+        {peptide.reconstitutionInstructions && (
+          <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
+            <View style={styles.sectionHeader}>
+              <IconSymbol
+                ios_icon_name="drop.fill"
+                android_material_icon_name="water-drop"
+                size={24}
+                color={colors.primary}
+              />
+              <Text style={[styles.sectionTitle, { color: textColor }]}>Reconstitution Instructions</Text>
+            </View>
+            <Text style={[styles.sectionText, { color: textColor }]}>
+              {peptide.reconstitutionInstructions}
+            </Text>
+          </View>
+        )}
+
         <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
           <View style={styles.sectionHeader}>
             <IconSymbol
