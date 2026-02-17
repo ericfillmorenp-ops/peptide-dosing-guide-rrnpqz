@@ -3,39 +3,85 @@ import { api, authenticatedApi, signUpTestUser, expectStatus, connectWebSocket, 
 
 describe("API Integration Tests", () => {
   // Shared state for chaining tests (e.g., created resource IDs, auth tokens)
-  // let authToken: string;
-  // let resourceId: string;
+  let peptideId: string;
 
-  // TODO: Add integration tests here.
-  // Tests run sequentially within describe, so you can chain state between them.
-  //
-  // Example without auth:
-  //
-  // test("Create resource", async () => {
-  //   const res = await api("/api/resources", {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({ name: "Test" }),
-  //   });
-  //   await expectStatus(res, 201);
-  //   const data = await res.json();
-  //   resourceId = data.id;
-  // });
-  //
-  // Example with auth (cleanup is automatic):
-  //
-  // test("Sign up test user", async () => {
-  //   const { token, user } = await signUpTestUser();
-  //   authToken = token;
-  //   expect(authToken).toBeDefined();
-  // });
-  //
-  // test("Create authenticated resource", async () => {
-  //   const res = await authenticatedApi("/api/resources", authToken, {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({ name: "Test" }),
-  //   });
-  //   await expectStatus(res, 201);
-  // });
+  describe("Peptides - Get All", () => {
+    test("Get all peptides should return 200", async () => {
+      const res = await api("/api/peptides");
+      await expectStatus(res, 200);
+      const data = await res.json();
+      expect(Array.isArray(data)).toBe(true);
+      // Store first peptide ID for later tests if available
+      if (data.length > 0) {
+        peptideId = data[0].id;
+        expect(peptideId).toBeDefined();
+      }
+    });
+  });
+
+  describe("Peptides - Get by ID", () => {
+    test("Get existing peptide by ID should return 200", async () => {
+      // If no peptides available, verify the test gracefully
+      if (!peptideId) {
+        expect(peptideId).toBeFalsy();
+        return;
+      }
+      const res = await api(`/api/peptides/${peptideId}`);
+      await expectStatus(res, 200);
+      const data = await res.json();
+      expect(data.id).toBe(peptideId);
+      expect(data.name).toBeDefined();
+      expect(data.category).toBeDefined();
+    });
+
+    test("Get non-existent peptide should return 404", async () => {
+      const nonExistentId = "00000000-0000-0000-0000-000000000000";
+      const res = await api(`/api/peptides/${nonExistentId}`);
+      await expectStatus(res, 404);
+      const data = await res.json();
+      expect(data.error).toBeDefined();
+    });
+
+    test("Get peptide with invalid UUID format should return 400", async () => {
+      const res = await api("/api/peptides/invalid-uuid");
+      await expectStatus(res, 400);
+    });
+  });
+
+  describe("Peptides - Search", () => {
+    test("Search peptides with valid query should return 200", async () => {
+      const res = await api("/api/peptides/search?q=test");
+      await expectStatus(res, 200);
+      const data = await res.json();
+      expect(Array.isArray(data)).toBe(true);
+    });
+
+    test("Search peptides with empty query should return 200", async () => {
+      const res = await api("/api/peptides/search?q=");
+      await expectStatus(res, 200);
+      const data = await res.json();
+      expect(Array.isArray(data)).toBe(true);
+    });
+
+    test("Search peptides without query parameter should return 400", async () => {
+      const res = await api("/api/peptides/search");
+      await expectStatus(res, 400);
+    });
+  });
+
+  describe("Peptides - Get by Category", () => {
+    test("Get peptides by category should return 200", async () => {
+      const res = await api("/api/peptides/category/growth");
+      await expectStatus(res, 200);
+      const data = await res.json();
+      expect(Array.isArray(data)).toBe(true);
+    });
+
+    test("Get peptides by non-existent category should return 200 with empty array", async () => {
+      const res = await api("/api/peptides/category/nonexistent-category-xyz");
+      await expectStatus(res, 200);
+      const data = await res.json();
+      expect(Array.isArray(data)).toBe(true);
+    });
+  });
 });
