@@ -22,7 +22,6 @@ export interface Peptide {
   frequency: string;
   timing: string | null;
   administrationRoute: string;
-  reconstitutionInstructions: string | null;
   createdAt: string;
 }
 

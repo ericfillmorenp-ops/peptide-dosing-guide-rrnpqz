@@ -17,7 +17,6 @@ const peptideSchema = {
     frequency: { type: 'string' },
     timing: { type: ['string', 'null'] },
     administrationRoute: { type: 'string' },
-    reconstitutionInstructions: { type: ['string', 'null'] },
     createdAt: { type: 'string', format: 'date-time' },
   },
 };
