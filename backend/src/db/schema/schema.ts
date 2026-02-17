@@ -12,5 +12,6 @@ export const peptides = pgTable('peptides', {
   frequency: text('frequency').notNull(),
   timing: text('timing').notNull(),
   administrationRoute: text('administration_route').notNull(),
+  reconstitutionInstructions: text('reconstitution_instructions'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });

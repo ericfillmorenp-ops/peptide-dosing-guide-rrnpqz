@@ -1,0 +1,1 @@
+ALTER TABLE "peptides" ADD COLUMN "reconstitution_instructions" text;
