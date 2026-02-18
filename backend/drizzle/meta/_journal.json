@@ -15,6 +15,13 @@
       "when": 1771366192660,
       "tag": "20260217220952_sleepy_nitro",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771373397728,
+      "tag": "20260218000957_outstanding_leo",
+      "breakpoints": true
     }
   ]
 }
