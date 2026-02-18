@@ -15,6 +15,7 @@ import { Stack, useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
 import { getAllPeptides, Peptide } from '@/utils/api';
+import PeptideCalculator from '@/components/PeptideCalculator';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -164,73 +165,9 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View style={[styles.searchContainer, { backgroundColor: bgColor }]}>
-        <View style={[styles.searchBar, { backgroundColor: cardBg, borderColor }]}>
-          <IconSymbol
-            ios_icon_name="magnifyingglass"
-            android_material_icon_name="search"
-            size={20}
-            color={secondaryTextColor}
-          />
-          <TextInput
-            style={[styles.searchInput, { color: textColor }]}
-            placeholder="Search peptides..."
-            placeholderTextColor={secondaryTextColor}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <IconSymbol
-                ios_icon_name="xmark.circle.fill"
-                android_material_icon_name="cancel"
-                size={20}
-                color={secondaryTextColor}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoryScroll}
-        contentContainerStyle={styles.categoryContainer}
-      >
-        {categories.map((category) => {
-          const isSelected = selectedCategory === category;
-          return (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.categoryChip,
-                {
-                  backgroundColor: isSelected ? colors.primary : cardBg,
-                  borderColor: isSelected ? colors.primary : borderColor,
-                }
-              ]}
-              onPress={() => {
-                console.log('User selected category:', category);
-                setSelectedCategory(category);
-              }}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  { color: isSelected ? '#FFFFFF' : textColor }
-                ]}
-              >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -239,84 +176,152 @@ export default function HomeScreen() {
           />
         }
       >
-        {filteredPeptides.length === 0 ? (
-          <View style={styles.emptyState}>
+        <PeptideCalculator />
+
+        <View style={[styles.searchContainer, { backgroundColor: bgColor }]}>
+          <View style={[styles.searchBar, { backgroundColor: cardBg, borderColor }]}>
             <IconSymbol
-              ios_icon_name="tray"
-              android_material_icon_name="inbox"
-              size={64}
+              ios_icon_name="magnifyingglass"
+              android_material_icon_name="search"
+              size={20}
               color={secondaryTextColor}
             />
-            <Text style={[styles.emptyText, { color: textColor }]}>
-              {noPeptidesMessage}
-            </Text>
-            {peptides.length === 0 && (
-              <TouchableOpacity
-                style={styles.refreshButton}
-                onPress={onRefresh}
-              >
+            <TextInput
+              style={[styles.searchInput, { color: textColor }]}
+              placeholder="Search peptides..."
+              placeholderTextColor={secondaryTextColor}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
                 <IconSymbol
-                  ios_icon_name="arrow.clockwise"
-                  android_material_icon_name="refresh"
+                  ios_icon_name="xmark.circle.fill"
+                  android_material_icon_name="cancel"
                   size={20}
-                  color="#FFFFFF"
+                  color={secondaryTextColor}
                 />
-                <Text style={styles.refreshButtonText}>Refresh</Text>
               </TouchableOpacity>
             )}
           </View>
-        ) : (
-          filteredPeptides.map((peptide) => {
-            const benefitsPreview = peptide.benefits.length > 100
-              ? peptide.benefits.substring(0, 100) + '...'
-              : peptide.benefits;
+        </View>
 
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoryScroll}
+          contentContainerStyle={styles.categoryContainer}
+        >
+          {categories.map((category) => {
+            const isSelected = selectedCategory === category;
             return (
               <TouchableOpacity
-                key={peptide.id}
-                style={[styles.peptideCard, { backgroundColor: cardBg, borderColor }]}
-                onPress={() => handlePeptidePress(peptide)}
+                key={category}
+                style={[
+                  styles.categoryChip,
+                  {
+                    backgroundColor: isSelected ? colors.primary : cardBg,
+                    borderColor: isSelected ? colors.primary : borderColor,
+                  }
+                ]}
+                onPress={() => {
+                  console.log('User selected category:', category);
+                  setSelectedCategory(category);
+                }}
               >
-                <View style={styles.cardHeader}>
-                  <Text style={[styles.peptideName, { color: textColor }]}>
-                    {peptide.name}
-                  </Text>
-                  <View style={[styles.categoryBadge, { backgroundColor: colors.primary + '20' }]}>
-                    <Text style={[styles.categoryBadgeText, { color: colors.primary }]}>
-                      {peptide.category}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={[styles.peptideBenefits, { color: secondaryTextColor }]}>
-                  {benefitsPreview}
+                <Text
+                  style={[
+                    styles.categoryText,
+                    { color: isSelected ? '#FFFFFF' : textColor }
+                  ]}
+                >
+                  {category}
                 </Text>
-                <View style={styles.cardFooter}>
-                  <View style={styles.dosageInfo}>
-                    <IconSymbol
-                      ios_icon_name="syringe"
-                      android_material_icon_name="medication"
-                      size={16}
-                      color={secondaryTextColor}
-                    />
-                    <Text style={[styles.dosageText, { color: secondaryTextColor }]}>
-                      {peptide.dosageMin}
-                    </Text>
-                    <Text style={[styles.dosageText, { color: secondaryTextColor }]}> - </Text>
-                    <Text style={[styles.dosageText, { color: secondaryTextColor }]}>
-                      {peptide.dosageMax}
-                    </Text>
-                  </View>
-                  <IconSymbol
-                    ios_icon_name="chevron.right"
-                    android_material_icon_name="chevron-right"
-                    size={20}
-                    color={secondaryTextColor}
-                  />
-                </View>
               </TouchableOpacity>
             );
-          })
-        )}
+          })}
+        </ScrollView>
+
+        <View style={styles.listContainer}>
+          {filteredPeptides.length === 0 ? (
+            <View style={styles.emptyState}>
+              <IconSymbol
+                ios_icon_name="tray"
+                android_material_icon_name="inbox"
+                size={64}
+                color={secondaryTextColor}
+              />
+              <Text style={[styles.emptyText, { color: textColor }]}>
+                {noPeptidesMessage}
+              </Text>
+              {peptides.length === 0 && (
+                <TouchableOpacity
+                  style={styles.refreshButton}
+                  onPress={onRefresh}
+                >
+                  <IconSymbol
+                    ios_icon_name="arrow.clockwise"
+                    android_material_icon_name="refresh"
+                    size={20}
+                    color="#FFFFFF"
+                  />
+                  <Text style={styles.refreshButtonText}>Refresh</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            filteredPeptides.map((peptide) => {
+              const benefitsPreview = peptide.benefits.length > 100
+                ? peptide.benefits.substring(0, 100) + '...'
+                : peptide.benefits;
+
+              return (
+                <TouchableOpacity
+                  key={peptide.id}
+                  style={[styles.peptideCard, { backgroundColor: cardBg, borderColor }]}
+                  onPress={() => handlePeptidePress(peptide)}
+                >
+                  <View style={styles.cardHeader}>
+                    <Text style={[styles.peptideName, { color: textColor }]}>
+                      {peptide.name}
+                    </Text>
+                    <View style={[styles.categoryBadge, { backgroundColor: colors.primary + '20' }]}>
+                      <Text style={[styles.categoryBadgeText, { color: colors.primary }]}>
+                        {peptide.category}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.peptideBenefits, { color: secondaryTextColor }]}>
+                    {benefitsPreview}
+                  </Text>
+                  <View style={styles.cardFooter}>
+                    <View style={styles.dosageInfo}>
+                      <IconSymbol
+                        ios_icon_name="syringe"
+                        android_material_icon_name="medication"
+                        size={16}
+                        color={secondaryTextColor}
+                      />
+                      <Text style={[styles.dosageText, { color: secondaryTextColor }]}>
+                        {peptide.dosageMin}
+                      </Text>
+                      <Text style={[styles.dosageText, { color: secondaryTextColor }]}> - </Text>
+                      <Text style={[styles.dosageText, { color: secondaryTextColor }]}>
+                        {peptide.dosageMax}
+                      </Text>
+                    </View>
+                    <IconSymbol
+                      ios_icon_name="chevron.right"
+                      android_material_icon_name="chevron-right"
+                      size={20}
+                      color={secondaryTextColor}
+                    />
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -376,6 +381,12 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
   searchContainer: {
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -411,9 +422,6 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 14,
     fontWeight: '500',
-  },
-  scrollView: {
-    flex: 1,
   },
   listContainer: {
     padding: 20,
