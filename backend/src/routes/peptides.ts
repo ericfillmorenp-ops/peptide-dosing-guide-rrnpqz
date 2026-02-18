@@ -17,6 +17,7 @@ const peptideSchema = {
     frequency: { type: 'string' },
     timing: { type: ['string', 'null'] },
     administrationRoute: { type: 'string' },
+    reconstitutionInstructions: { type: ['string', 'null'] },
     createdAt: { type: 'string', format: 'date-time' },
   },
 };
@@ -115,8 +116,9 @@ export function register(app: App, fastify: FastifyInstance) {
     request: FastifyRequest<{ Params: { category: string } }>,
     reply: FastifyReply
   ) => {
-    const { category } = request.params;
-    app.logger.info({ category }, 'Fetching peptides by category');
+    const rawCategory = request.params.category;
+    const category = decodeURIComponent(rawCategory);
+    app.logger.info({ rawCategory, decodedCategory: category }, 'Fetching peptides by category');
     try {
       const results = await app.db
         .select()

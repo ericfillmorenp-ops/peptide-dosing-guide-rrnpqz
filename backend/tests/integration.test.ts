@@ -17,6 +17,9 @@ describe("API Integration Tests", () => {
         expect(peptideId).toBeDefined();
         expect(data[0].name).toBeDefined();
         expect(data[0].category).toBeDefined();
+        expect(data[0].description).toBeDefined();
+        expect(data[0].dosageMin).toBeDefined();
+        expect(data[0].dosageMax).toBeDefined();
       }
     });
   });
@@ -34,6 +37,13 @@ describe("API Integration Tests", () => {
       expect(data.id).toBe(peptideId);
       expect(data.name).toBeDefined();
       expect(data.category).toBeDefined();
+      expect(data.description).toBeDefined();
+      expect(data.benefits).toBeDefined();
+      expect(data.dosageMin).toBeDefined();
+      expect(data.dosageMax).toBeDefined();
+      expect(data.frequency).toBeDefined();
+      expect(data.administrationRoute).toBeDefined();
+      expect(data.createdAt).toBeDefined();
     });
 
     test("Get non-existent peptide should return 404", async () => {
