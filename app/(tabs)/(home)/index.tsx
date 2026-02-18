@@ -29,7 +29,18 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const categories = ['All', 'GLP-1', 'Growth Hormone', 'Healing', 'Skin & Cosmetic', 'Performance', 'Metabolic', 'Immune', 'Cognitive'];
+  const categories = [
+    'All',
+    'GLP-1',
+    'Growth Hormone',
+    'Healing',
+    'Skin & Cosmetic',
+    'Performance',
+    'Metabolic',
+    'Immune',
+    'Cognitive',
+    'Anti-Aging'
+  ];
 
   useEffect(() => {
     console.log('HomeScreen mounted, fetching peptides...');
@@ -153,10 +164,12 @@ export default function HomeScreen() {
       
       <View style={[styles.header, { backgroundColor: bgColor, borderBottomColor: borderColor }]}>
         <Text style={[styles.headerTitle, { color: textColor }]}>Peptide Guide</Text>
-        <Text style={[styles.headerSubtitle, { color: secondaryTextColor }]}>
-          {peptides.length}
-        </Text>
-        <Text style={[styles.headerSubtitle, { color: secondaryTextColor }]}> peptides available</Text>
+        <View style={styles.headerSubtitleRow}>
+          <Text style={[styles.headerSubtitle, { color: secondaryTextColor }]}>
+            {peptides.length}
+          </Text>
+          <Text style={[styles.headerSubtitle, { color: secondaryTextColor }]}> peptides available</Text>
+        </View>
       </View>
 
       <View style={[styles.searchContainer, { backgroundColor: bgColor }]}>
@@ -363,6 +376,10 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     marginBottom: 4,
+  },
+  headerSubtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   headerSubtitle: {
     fontSize: 14,

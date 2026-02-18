@@ -1,4 +1,5 @@
 
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,11 +9,10 @@ import {
   useColorScheme,
   TouchableOpacity,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { colors } from '@/styles/commonStyles';
-import { IconSymbol } from '@/components/IconSymbol';
-import { getPeptideById, Peptide } from '@/utils/api';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { IconSymbol } from '@/components/IconSymbol';
+import { colors } from '@/styles/commonStyles';
+import { getPeptideById, Peptide } from '@/utils/api';
 
 export default function PeptideDetailScreen() {
   const router = useRouter();
@@ -160,13 +160,15 @@ export default function PeptideDetailScreen() {
           <View style={styles.dosageGrid}>
             <View style={styles.dosageItem}>
               <Text style={[styles.dosageLabel, { color: secondaryTextColor }]}>Dosage Range</Text>
-              <Text style={[styles.dosageValue, { color: textColor }]}>
-                {peptide.dosageMin}
-              </Text>
-              <Text style={[styles.dosageValue, { color: textColor }]}> to </Text>
-              <Text style={[styles.dosageValue, { color: textColor }]}>
-                {peptide.dosageMax}
-              </Text>
+              <View style={styles.dosageRow}>
+                <Text style={[styles.dosageValue, { color: textColor }]}>
+                  {peptide.dosageMin}
+                </Text>
+                <Text style={[styles.dosageValue, { color: textColor }]}> to </Text>
+                <Text style={[styles.dosageValue, { color: textColor }]}>
+                  {peptide.dosageMax}
+                </Text>
+              </View>
             </View>
             <View style={styles.dosageItem}>
               <Text style={[styles.dosageLabel, { color: secondaryTextColor }]}>Frequency</Text>
@@ -186,6 +188,23 @@ export default function PeptideDetailScreen() {
             )}
           </View>
         </View>
+
+        {peptide.reconstitutionInstructions && (
+          <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
+            <View style={styles.sectionHeader}>
+              <IconSymbol
+                ios_icon_name="drop.fill"
+                android_material_icon_name="water-drop"
+                size={24}
+                color={colors.primary}
+              />
+              <Text style={[styles.sectionTitle, { color: textColor }]}>Reconstitution Instructions</Text>
+            </View>
+            <Text style={[styles.sectionText, { color: textColor }]}>
+              {peptide.reconstitutionInstructions}
+            </Text>
+          </View>
+        )}
 
         {peptide.sideEffects && (
           <View style={[styles.section, { backgroundColor: cardBg, borderColor }]}>
@@ -307,6 +326,10 @@ const styles = StyleSheet.create({
   },
   dosageItem: {
     gap: 4,
+  },
+  dosageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   dosageLabel: {
     fontSize: 13,
