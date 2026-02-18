@@ -6,7 +6,7 @@ describe("API Integration Tests", () => {
   let peptideId: string;
 
   describe("Peptides - Get All", () => {
-    test("Get all peptides should return 200", async () => {
+    test("Get all peptides should return 200 with array", async () => {
       const res = await api("/api/peptides");
       await expectStatus(res, 200);
       const data = await res.json();
@@ -16,6 +16,13 @@ describe("API Integration Tests", () => {
         peptideId = data[0].id;
         expect(peptideId).toBeDefined();
         expect(data[0].name).toBeDefined();
+        expect(data[0].category).toBeDefined();
+        expect(data[0].benefits).toBeDefined();
+        expect(data[0].dosageMin).toBeDefined();
+        expect(data[0].dosageMax).toBeDefined();
+        expect(data[0].frequency).toBeDefined();
+        expect(data[0].administrationRoute).toBeDefined();
+        expect(data[0].createdAt).toBeDefined();
       }
     });
   });
@@ -32,6 +39,12 @@ describe("API Integration Tests", () => {
       expect(data.id).toBe(peptideId);
       expect(data.name).toBeDefined();
       expect(data.category).toBeDefined();
+      expect(data.benefits).toBeDefined();
+      expect(data.dosageMin).toBeDefined();
+      expect(data.dosageMax).toBeDefined();
+      expect(data.frequency).toBeDefined();
+      expect(data.administrationRoute).toBeDefined();
+      expect(data.createdAt).toBeDefined();
     });
 
     test("Get non-existent peptide should return 404", async () => {
@@ -47,14 +60,14 @@ describe("API Integration Tests", () => {
   });
 
   describe("Peptides - Search", () => {
-    test("Search peptides with valid query should return 200", async () => {
+    test("Search peptides with valid query should return 200 with array", async () => {
       const res = await api("/api/peptides/search?q=growth");
       await expectStatus(res, 200);
       const data = await res.json();
       expect(Array.isArray(data)).toBe(true);
     });
 
-    test("Search peptides with empty query should return 200", async () => {
+    test("Search peptides with empty query should return 200 with array", async () => {
       const res = await api("/api/peptides/search?q=");
       await expectStatus(res, 200);
       const data = await res.json();
@@ -68,7 +81,7 @@ describe("API Integration Tests", () => {
   });
 
   describe("Peptides - Get by Category", () => {
-    test("Get peptides by category should return 200", async () => {
+    test("Get peptides by category should return 200 with array", async () => {
       const res = await api("/api/peptides/category/Growth Hormone");
       await expectStatus(res, 200);
       const data = await res.json();
