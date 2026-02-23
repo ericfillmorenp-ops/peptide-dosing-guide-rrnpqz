@@ -5,31 +5,32 @@
     "slug": "peptide-dosing-guide",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/app-icon-lms.png",
+    "icon": "./assets/images/1011363f-8892-4f60-81fd-4a491c4550c0.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/app-icon-lms.png",
+      "image": "./assets/images/1011363f-8892-4f60-81fd-4a491c4550c0.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#0891b2"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Natively",
+      "bundleIdentifier": "com.anonymous.peptidedosingguide",
+      "icon": "./assets/images/1011363f-8892-4f60-81fd-4a491c4550c0.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/app-icon-lms.png",
-        "backgroundColor": "#000000"
+        "foregroundImage": "./assets/images/1011363f-8892-4f60-81fd-4a491c4550c0.png",
+        "backgroundColor": "#0891b2"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.Natively"
+      "package": "com.anonymous.peptidedosingguide"
     },
     "web": {
-      "favicon": "./assets/images/final_quest_240x240.png",
+      "favicon": "./assets/images/1011363f-8892-4f60-81fd-4a491c4550c0.png",
       "bundler": "metro"
     },
     "plugins": [
