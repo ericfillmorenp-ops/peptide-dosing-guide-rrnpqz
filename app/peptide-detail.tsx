@@ -142,7 +142,7 @@ export default function PeptideDetailScreen() {
               size={24}
               color={colors.primary}
             />
-            <Text style={[styles.sectionTitle, { color: textColor }]}>Benefits</Text>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>Potential Effects</Text>
           </View>
           <Text style={[styles.sectionText, { color: textColor }]}>{peptide.benefits}</Text>
         </View>
@@ -215,7 +215,7 @@ export default function PeptideDetailScreen() {
                 size={24}
                 color={colors.error}
               />
-              <Text style={[styles.sectionTitle, { color: textColor }]}>Side Effects</Text>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>Potential Side Effects</Text>
             </View>
             <Text style={[styles.sectionText, { color: textColor }]}>{peptide.sideEffects}</Text>
           </View>

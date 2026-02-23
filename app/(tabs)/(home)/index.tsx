@@ -299,9 +299,14 @@ export default function HomeScreen() {
                       </Text>
                     </View>
                   </View>
-                  <Text style={[styles.peptideBenefits, { color: secondaryTextColor }]}>
-                    {benefitsPreview}
-                  </Text>
+                  <View style={styles.potentialEffectsSection}>
+                    <Text style={[styles.potentialEffectsLabel, { color: secondaryTextColor }]}>
+                      Potential Effects
+                    </Text>
+                    <Text style={[styles.peptideBenefits, { color: secondaryTextColor }]}>
+                      {benefitsPreview}
+                    </Text>
+                  </View>
                   <View style={styles.cardFooter}>
                     <View style={styles.dosageInfo}>
                       <IconSymbol
@@ -487,10 +492,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  potentialEffectsSection: {
+    marginBottom: 12,
+  },
+  potentialEffectsLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
   peptideBenefits: {
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: 12,
   },
   cardFooter: {
     flexDirection: 'row',
