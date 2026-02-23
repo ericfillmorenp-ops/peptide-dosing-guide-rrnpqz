@@ -1,7 +1,8 @@
+
 {
   "expo": {
     "name": "Peptide Dosing Guide",
-    "slug": "Peptide Dosing Guide",
+    "slug": "peptide-dosing-guide",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/app-icon-lms.png",
@@ -36,7 +37,7 @@
       "expo-router",
       "expo-web-browser"
     ],
-    "scheme": "Peptide Dosing Guide",
+    "scheme": "peptide-dosing-guide",
     "experiments": {
       "typedRoutes": true
     },
