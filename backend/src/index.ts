@@ -1,13 +1,21 @@
 import { createApplication } from "@specific-dev/framework";
 import * as schema from './db/schema/schema.js';
+import * as authSchema from './db/schema/auth-schema.js';
 import * as peptidesRoutes from './routes/peptides.js';
 import { peptideSeedData } from './lib/peptide-seed-data.js';
 
-// Create application with schema for full database type support
-export const app = await createApplication(schema);
+// Combine application and auth schemas
+const combinedSchema = { ...schema, ...authSchema };
+
+// Create application with combined schema for full database type support
+export const app = await createApplication(combinedSchema);
 
 // Export App type for use in route files
 export type App = typeof app;
+
+// Enable authentication with email/password and OAuth providers
+app.withAuth();
+app.logger.info('Authentication enabled with email/password, Google OAuth, and Apple OAuth');
 
 // Seed database - clear and reseed with complete data
 async function seedDatabase() {

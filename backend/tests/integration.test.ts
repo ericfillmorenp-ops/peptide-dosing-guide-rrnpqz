@@ -15,6 +15,7 @@ describe("API Integration Tests", () => {
       if (data.length > 0) {
         peptideId = data[0].id;
         expect(peptideId).toBeDefined();
+        expect(data[0].name).toBeDefined();
       }
     });
   });
@@ -50,6 +51,11 @@ describe("API Integration Tests", () => {
       await expectStatus(res, 200);
       const data = await res.json();
       expect(Array.isArray(data)).toBe(true);
+      // Verify response structure if results exist
+      if (data.length > 0) {
+        expect(data[0].id).toBeDefined();
+        expect(data[0].name).toBeDefined();
+      }
     });
 
     test("Search peptides with empty query should return 200 with array", async () => {
@@ -71,6 +77,11 @@ describe("API Integration Tests", () => {
       await expectStatus(res, 200);
       const data = await res.json();
       expect(Array.isArray(data)).toBe(true);
+      // Verify response structure if results exist
+      if (data.length > 0) {
+        expect(data[0].id).toBeDefined();
+        expect(data[0].name).toBeDefined();
+      }
     });
 
     test("Get peptides by non-existent category should return 200 with empty array", async () => {
@@ -85,6 +96,11 @@ describe("API Integration Tests", () => {
       await expectStatus(res, 200);
       const data = await res.json();
       expect(Array.isArray(data)).toBe(true);
+      // Verify response structure if results exist
+      if (data.length > 0) {
+        expect(data[0].id).toBeDefined();
+        expect(data[0].name).toBeDefined();
+      }
     });
   });
 });
